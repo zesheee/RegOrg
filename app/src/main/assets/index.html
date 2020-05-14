@@ -6,9 +6,13 @@
         <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
-        <link rel="stylesheet" href="css/leaflet.css"><link rel="stylesheet" href="css/L.Control.Locate.min.css">
-        <link rel="stylesheet" href="css/qgis2web.css"><link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Locate.min.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
         <link rel="stylesheet" href="css/leaflet-measure.css">
+        <link rel="stylesheet" href="css/leaflet-search.css">
+        <link rel="stylesheet" href="css/style.css">
         <style>
         html, body, #map {
             width: 100%;
@@ -33,10 +37,15 @@
         <script src="js/labelgun.min.js"></script>
         <script src="js/labels.js"></script>
         <script src="js/leaflet-measure.js"></script>
+        <script src="js/leaflet.fusesearch.js"></script>
+        <script src="js/leaflet-search.js"></script>
         <script src="data/_1.js"></script>
         <script src="data/dorogi_2.js"></script>
         <script src="data/123_3.js"></script>
         <script>
+
+
+        var data = json_123_3;
         var map = L.map('map', {
             zoomControl:true, maxZoom:28, minZoom:1
         }).fitBounds([[62.7443811427671,129.6232355709061],[62.772475513482036,129.7027586050469]]);
@@ -58,6 +67,9 @@
         var bounds_group = new L.featureGroup([]);
         function setBounds() {
         }
+
+        
+
         var layer_2gisMap_0 = L.tileLayer('http://tile2.maps.2gis.com/tiles?x={x}&y={y}&z={z}&v=1.1', {
             opacity: 1.0,
             attribution: '',
@@ -114,9 +126,16 @@
                 interactive: true,
             }
         }
+        var popup = L.popup();
+        var marker = L.marker();
 function onMapClick(e) {
-    var marker = L.marker(e.latlng).addTo(map);
+    marker = L.marker(e.latlng).addTo(map);
+    popup
+        .setLatLng(e.latlng)
+        .setContent("Привет! Я маркер " + e.latlng.toString())
+        marker.bindPopup(popup).openPopup();
 }
+
 
 map.on('click', onMapClick);
 
@@ -290,8 +309,32 @@ map.on('click', onMapClick);
         });
         bounds_group.addLayer(layer_123_3);
         map.addLayer(layer_123_3);
+
+    var searchControl = new L.Control.Search({
+        layer: layer_123_3,
+        propertyName: 'адрес',
+        marker: false,
+        initial: false,
+        moveToLocation: function(latlng, title, map) {
+            var zoom = map.getBoundsZoom(latlng.layer.getBounds());
+            map.setView(latlng, zoom); // access the zoom
+        }
+    });
+
+    searchControl.on('search:locationfound', function(e) {
+        if(e.layer._popup)
+            e.layer.openPopup();
+
+    }).on('search:collapsed', function(e) {
+        featuresLayer.eachLayer(function(layer) {   //restore feature color
+            featuresLayer.resetStyle(layer);
+        }); 
+    });
+    
+    map.addControl( searchControl );  //inizialize search control
+
         var baseMaps = {};
-        L.control.layers(baseMaps,{'123<br /><table><tr><td style="text-align: center;"><img src="legend/123_3_10.png" /></td><td>1</td></tr><tr><td style="text-align: center;"><img src="legend/123_3_1.png" /></td><td></td></tr></table>': layer_123_3,'<img src="legend/dorogi_2.png" /> dorogi': layer_dorogi_2,'<img src="legend/_1.png" /> ЗУ': layer__1,"2gis Map": layer_2gisMap_0,},{collapsed:false}).addTo(map);
+        L.control.layers(baseMaps,{'Здания<br /><table><tr><td style="text-align: center;"><img src="legend/123_3_10.png" /></td><td>Аварийные дома</td></tr><tr><td style="text-align: center;"><img src="legend/123_3_1.png" /></td><td>В хорошем состоянии</td></tr></table>': layer_123_3,'<img src="legend/dorogi_2.png" /> Дороги': layer_dorogi_2,'<img src="legend/_1.png" /> Земельные Участки': layer__1,"Карта 2ГИС": layer_2gisMap_0,},{collapsed:false}).addTo(map);
         setBounds();
         </script>
     </body>
